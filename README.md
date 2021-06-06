@@ -6,7 +6,7 @@ If you search for text, that is part of the image, it will yield the annotation 
 ## Demo
 ![](demo.gif)
 
-# Remarks
+## Remarks
 **Note**: This plugin is not in the official list of plugins, yet. You need to [install it manually](#Manually-installing-the-plugin).
 
 **Note**: The process of extracting the text from the image is not done locally. The plugin uses an online API hosted at https://ocr.taskbone.com.
@@ -15,14 +15,14 @@ The image data is stored as long as neccessary for the text extraction and delet
 
 However, if this is a dealbreaker for you, see [Alternatives](#Alternatives).
 
-# Manually installing the plugin
+## Manually installing the plugin
 
 - Clone this repo
 - npm i or yarn to install dependencies
 - npm run build
 - Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/taskbone-ocr-plugin/`.
-# Alternatives
-## Local Tesseract installation
+## Alternatives
+### Local Tesseract installation
 See https://forum.obsidian.md/t/basic-ocr-in-obsidian/18087
 
 Advantages:
