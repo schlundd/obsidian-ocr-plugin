@@ -1,17 +1,20 @@
 import { App, Modal, Plugin, PluginSettingTab, Setting, SuggestModal } from 'obsidian';
 
 interface TaskboneOCRPluginSettings {
-	token: string
+	standardToken?: string,
+	premiumToken?: string,
+	termsAccepted: boolean,
+	isPremium: boolean
 }
 
 const DEFAULT_SETTINGS: TaskboneOCRPluginSettings = {
-	// for testing purposes
-	// will be removed
-	// token valid until Monday, June 14, 2021 4:36:36 AM
-	token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ3d3cudGFza2JvbmUuY29tIiwiYXVkIjoib2NyLnRhc2tib25lLmNvbSIsInN1YiI6InRlc3QiLCJleHAiOjE2MjM2NDUzOTZ9.tOWQkBRhPsfYHCdK5xDTH50YL27zo2BZdJwnk5e0CM4'
+	termsAccepted: false,
+	isPremium: false
 }
 
 const BASE_URL = "https://ocr.taskbone.com"
+const privacyPolicyURL = "https://www.taskbone.com/legal/privacy"
+const contactURL = "http://www.taskbone.com/contact"
 
 export default class TaskboneOCRPlugin extends Plugin {
 	settings: TaskboneOCRPluginSettings;
@@ -20,11 +23,36 @@ export default class TaskboneOCRPlugin extends Plugin {
 		console.log('Taskbone OCR: start loading plugin');
 
 		await this.loadSettings();
+		this.addSettingTab(new TaskboneOCRSettingTab(this.app, this));
 
 		this.addCommand({
 			id: 'open-image-select-modal',
 			name: 'Create annotation page for image',
-			callback: () => {
+			callback: async () => {
+				if(!this.settings.termsAccepted) {
+					const errorText = `Please go to the Taskbone OCR plugin settings and accept the privacy policy.`
+					return new ErrorModal(this.app, errorText).open()
+				}
+				if(!this.settings.isPremium) {
+					if(!this.settings.standardToken) {
+						const tokenResponse = await fetch(BASE_URL + '/get-new-token', {
+							method: 'post'
+						})
+						if (tokenResponse.status == 200) {
+							const jsonResponse = await tokenResponse.json();
+							this.settings.standardToken = jsonResponse.token
+							this.saveSettings()
+						} else {
+							const errorText = `Taskbone OCR Error: ${tokenResponse.status}<br/>Please try again later.`
+							return new ErrorModal(this.app, errorText).open();
+						}
+					}
+				} else {
+					if(!this.settings.premiumToken) {
+						const errorText = `Your plugin configuration is incomplete. Check the plugin settings and either enter a token or disable the 'I have a personal token' setting.`
+						return new ErrorModal(this.app, errorText).open();
+					}
+				}
 				const images = this.getNotAnnotatedImagePaths()
 				if (images.length > 0) {
 					new FileSelectorModal(this.app, this).open();
@@ -33,8 +61,6 @@ export default class TaskboneOCRPlugin extends Plugin {
 				}
 			}
 		});
-
-		this.addSettingTab(new TaskboneOCRSettingTab(this.app, this));
 	}
 
 	onunload() {
@@ -57,19 +83,25 @@ export default class TaskboneOCRPlugin extends Plugin {
 		const fileBuffer = await this.app.vault.readBinary(file);
 		const formData = new FormData();
 		formData.append('image', new Blob([fileBuffer]))
-		const response = await fetch(BASE_URL + '/get-text', {
-			headers: {
-				'Authorization': 'Bearer ' + this.settings.token
-			},
-			method: "post",
-			body: formData
-		});
-		if (response.status == 200) {
-			const jsonResponse = await response.json();
-			const text = jsonResponse?.text
-			return text || ''
-		} else {
-			const errorText = `Could not read Text from ${path}:<br/> Error: ${response.status}`
+		const token = this.settings.isPremium?this.settings.premiumToken:this.settings.standardToken
+		try {
+			const response = await fetch(BASE_URL + '/get-text', {
+				headers: {
+					'Authorization': 'Bearer ' + token
+				},
+				method: "post",
+				body: formData
+			});
+			if (response.status == 200) {
+				const jsonResponse = await response.json();
+				const text = jsonResponse?.text
+				return text || ''
+			} else {
+				const errorText = `Could not read Text from ${path}:<br/> Error: ${response.status}`
+				new ErrorModal(this.app, errorText).open();
+			}						
+		} catch (error) {
+			const errorText = `The OCR service seems unavailable right now. Please try again later.`
 			new ErrorModal(this.app, errorText).open();
 		}
 	}
@@ -170,16 +202,49 @@ class TaskboneOCRSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		containerEl.createEl('h2', { text: 'Taskbone OCR Settings' });
+		containerEl.createEl('p', { text: 'The Taskbone OCR service is provided for free (within reasonable limits).' })
+
+		const div = containerEl.createEl('div');
+		const premiumText = document.createElement('p');
+		premiumText.innerHTML = `<a href="${contactURL}">Get in touch</a> if you think you are outside of these limits or if you are interested in any of the following features:<ul><li>PDF support</li><li>bigger file size limit</li><li>bulk operations (e.g. process a whole directory with lots of images)</li><li>General image annotations (find relevant tags for images)</li></ul>`
+		div.appendChild(premiumText);
+
+		const acceptTermsSetting = new Setting(containerEl)
+			.setName('Accept Privacy Policy and Terms and Conditions')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.termsAccepted)
+					.onChange((value) => {
+						this.plugin.settings.termsAccepted = value;
+						this.plugin.saveData(this.plugin.settings);
+						this.display();
+					})
+			);
+		acceptTermsSetting.descEl.innerHTML = `I accept the Taskbone <a href="${privacyPolicyURL}">Privacy Policy</a>`
 
 		new Setting(containerEl)
+			.setName('I have a personal token')
+			.setDesc('Switch on, if you received a custom authentication token')
+			.addToggle((toggle) =>
+			toggle
+				.setValue(this.plugin.settings.isPremium)
+				.onChange((value) => {
+					this.plugin.settings.isPremium = value;
+					this.plugin.saveData(this.plugin.settings);
+					this.display();
+				}))
+
+		if(this.plugin.settings.isPremium) {
+			new Setting(containerEl)
 			.setName('Authentication Token')
-			.setDesc('The token used to authenticate at the online OCR Service')
+			.setDesc('Copy and paste the token you received from taskbone')
 			.addText(text => text
 				.setPlaceholder('Enter your token')
-				.setValue(this.plugin.settings.token)
+				.setValue(this.plugin.settings.premiumToken)
 				.onChange(async (value) => {
-					this.plugin.settings.token = value;
+					this.plugin.settings.premiumToken = value;
 					await this.plugin.saveSettings();
 				}));
+		}
 	}
 }
