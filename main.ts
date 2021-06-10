@@ -1,4 +1,4 @@
-import { App, Modal, Plugin, PluginSettingTab, Setting, SuggestModal } from 'obsidian';
+import { App, Modal, Plugin, PluginSettingTab, Setting, SuggestModal, TFile } from 'obsidian';
 
 interface TaskboneOCRPluginSettings {
 	standardToken?: string,
@@ -29,12 +29,12 @@ export default class TaskboneOCRPlugin extends Plugin {
 			id: 'open-image-select-modal',
 			name: 'Create annotation page for image',
 			callback: async () => {
-				if(!this.settings.termsAccepted) {
+				if (!this.settings.termsAccepted) {
 					const errorText = `Please go to the Taskbone OCR plugin settings and accept the privacy policy.`
 					return new ErrorModal(this.app, errorText).open()
 				}
-				if(!this.settings.isPremium) {
-					if(!this.settings.standardToken) {
+				if (!this.settings.isPremium) {
+					if (!this.settings.standardToken) {
 						const tokenResponse = await fetch(BASE_URL + '/get-new-token', {
 							method: 'post'
 						})
@@ -48,12 +48,12 @@ export default class TaskboneOCRPlugin extends Plugin {
 						}
 					}
 				} else {
-					if(!this.settings.premiumToken) {
+					if (!this.settings.premiumToken) {
 						const errorText = `Your plugin configuration is incomplete. Check the plugin settings and either enter a token or disable the 'I have a personal token' setting.`
 						return new ErrorModal(this.app, errorText).open();
 					}
 				}
-				const images = this.getNotAnnotatedImagePaths()
+				const images = this.getNotAnnotatedImageFiles()
 				if (images.length > 0) {
 					new FileSelectorModal(this.app, this).open();
 				} else {
@@ -75,15 +75,11 @@ export default class TaskboneOCRPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	async getTextForFile(path: string): Promise<string> {
-		const vault = this.app.vault;
-		const file = vault.getFiles().filter((file) => {
-			return file.path == path
-		})[0]
+	async getTextForFile(file: TFile): Promise<string> {
 		const fileBuffer = await this.app.vault.readBinary(file);
 		const formData = new FormData();
 		formData.append('image', new Blob([fileBuffer]))
-		const token = this.settings.isPremium?this.settings.premiumToken:this.settings.standardToken
+		const token = this.settings.isPremium ? this.settings.premiumToken : this.settings.standardToken
 		try {
 			const response = await fetch(BASE_URL + '/get-text', {
 				headers: {
@@ -97,28 +93,32 @@ export default class TaskboneOCRPlugin extends Plugin {
 				const text = jsonResponse?.text
 				return text || ''
 			} else {
-				const errorText = `Could not read Text from ${path}:<br/> Error: ${response.status}`
+				const errorText = `Could not read Text from ${file.path}:<br/> Error: ${response.status}`
 				new ErrorModal(this.app, errorText).open();
-			}						
+			}
 		} catch (error) {
 			const errorText = `The OCR service seems unavailable right now. Please try again later.`
 			new ErrorModal(this.app, errorText).open();
 		}
 	}
 
-	async createAnnotationFileForFile(path: string): Promise<void> {
-		const imageText = await this.getTextForFile(path)
+	async createAnnotationFileForFile(file: TFile): Promise<void> {
+		const imageText = await this.getTextForFile(file)
 		if (!imageText) return
 		if (imageText.length == 0) {
-			new ErrorModal(this.app, `No text found in ${path}`).open()
-		} else {
-			const annotationFileContent = `![[${path}]]\n\n${imageText}`
-			const annotationFilePath = path + '.annotations.md'
+			new ErrorModal(this.app, `No text found in ${file.path}`).open()
+			return
+		}
+		const annotationFileContent = `![[${file.path}]]\n\n${imageText}`
+		const annotationFilePath = file.path + '.annotations.md'
+		try {
 			this.app.vault.create(annotationFilePath, annotationFileContent)
+		} catch(e) {
+			new ErrorModal(this.app, `Could not create file ${file.path}.<br/>${e.toString()}`)
 		}
 	}
 
-	getNotAnnotatedImagePaths(): string[] {
+	getNotAnnotatedImageFiles(): TFile[] {
 		const files = this.app.vault.getFiles()
 		const markdownFilePaths = this.app.vault.getMarkdownFiles().map((file) => {
 			return file.path
@@ -130,15 +130,12 @@ export default class TaskboneOCRPlugin extends Plugin {
 			const annotationFileAlreadyExist = markdownFilePaths.contains(annotationFilePath);
 			return !annotationFileAlreadyExist
 		})
-		const imagePaths = images.map((file) => {
-			return file.path
-		})
-		return imagePaths;
+		return images;
 	}
 
 }
 
-class FileSelectorModal extends SuggestModal<string> {
+class FileSelectorModal extends SuggestModal<TFile> {
 	plugin: TaskboneOCRPlugin
 
 	constructor(app: App, plugin: TaskboneOCRPlugin) {
@@ -147,24 +144,23 @@ class FileSelectorModal extends SuggestModal<string> {
 		this.plugin = plugin
 	}
 
-	getSuggestions(query: string): string[] {
+	getSuggestions(query: string): TFile[] {
 
-		const imagePaths = this.plugin.getNotAnnotatedImagePaths()
+		const imageFiles = this.plugin.getNotAnnotatedImageFiles()
 		if (query.length == 0) {
-			return imagePaths
+			return imageFiles
 		}
-		const filteredImageNames = imagePaths.filter((path, index, paths) => {
-			const match = path.contains(query)
-			return path.contains(query)
+		const filteredImages = imageFiles.filter((file) => {
+			return file.path.contains(query)
 		})
-		return filteredImageNames
+		return filteredImages
 	}
 
-	renderSuggestion(value: string, el: HTMLElement): void {
-		el.setText(value);
+	renderSuggestion(value: TFile, el: HTMLElement): void {
+		el.setText(value.path);
 	}
 
-	async onChooseSuggestion(item: string, evt: MouseEvent | KeyboardEvent): Promise<void> {
+	async onChooseSuggestion(item: TFile, evt: MouseEvent | KeyboardEvent): Promise<void> {
 		this.plugin.createAnnotationFileForFile(item);
 	}
 }
@@ -226,25 +222,25 @@ class TaskboneOCRSettingTab extends PluginSettingTab {
 			.setName('I have a personal token')
 			.setDesc('Switch on, if you received a custom authentication token')
 			.addToggle((toggle) =>
-			toggle
-				.setValue(this.plugin.settings.isPremium)
-				.onChange((value) => {
-					this.plugin.settings.isPremium = value;
-					this.plugin.saveData(this.plugin.settings);
-					this.display();
-				}))
+				toggle
+					.setValue(this.plugin.settings.isPremium)
+					.onChange((value) => {
+						this.plugin.settings.isPremium = value;
+						this.plugin.saveData(this.plugin.settings);
+						this.display();
+					}))
 
-		if(this.plugin.settings.isPremium) {
+		if (this.plugin.settings.isPremium) {
 			new Setting(containerEl)
-			.setName('Authentication Token')
-			.setDesc('Copy and paste the token you received from taskbone')
-			.addText(text => text
-				.setPlaceholder('Enter your token')
-				.setValue(this.plugin.settings.premiumToken)
-				.onChange(async (value) => {
-					this.plugin.settings.premiumToken = value;
-					await this.plugin.saveSettings();
-				}));
+				.setName('Authentication Token')
+				.setDesc('Copy and paste the token you received from taskbone')
+				.addText(text => text
+					.setPlaceholder('Enter your token')
+					.setValue(this.plugin.settings.premiumToken)
+					.onChange(async (value) => {
+						this.plugin.settings.premiumToken = value;
+						await this.plugin.saveSettings();
+					}));
 		}
 	}
 }
