@@ -113,6 +113,7 @@ export default class TaskboneOCRPlugin extends Plugin {
 		const annotationFilePath = file.path + '.annotations.md'
 		try {
 			this.app.vault.create(annotationFilePath, annotationFileContent)
+			new SuccessModal(this.app, `Successfully created ${annotationFilePath}`).open()
 		} catch(e) {
 			new ErrorModal(this.app, `Could not create file ${file.path}.<br/>${e.toString()}`)
 		}
@@ -176,6 +177,25 @@ class ErrorModal extends Modal {
 
 	onOpen() {
 		this.titleEl.setText("Taskbone OCR Error")
+		this.contentEl.innerHTML = this.message
+	}
+
+	onClose() {
+		this.containerEl.empty()
+	}
+}
+
+class SuccessModal extends Modal {
+
+	message: string
+
+	constructor(app: App, message: string) {
+		super(app);
+		this.message = message
+	}
+
+	onOpen() {
+		this.titleEl.setText("Taskbone OCR Success")
 		this.contentEl.innerHTML = this.message
 	}
 
