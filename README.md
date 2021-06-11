@@ -5,7 +5,7 @@ With this plugin you can extract the text of image attachments. It will create a
 If you search for text that is part of the image, it will yield the annotation document.
 
 ## Demo
-![](demo.gif)
+![Demo](https://raw.githubusercontent.com/schlundd/obsidian-ocr-plugin/master/demo.gif)
 
 ## Remarks
 
