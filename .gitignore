@@ -1,14 +1,6 @@
-# Intellij
-*.iml
-.idea
-
 # npm
 node_modules
-package-lock.json
-
-# build
-main.js
-*.js.map
 
 # obsidian
-data.json
+dist/data.json
+dist/.hotreload

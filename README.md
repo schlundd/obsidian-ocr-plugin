@@ -1,24 +1,21 @@
-# Obsidian OCR Plugin
+# Extract text from images
 
-With this plugin you can extract the text of image attachments. It will create an annotation document next to the image document. This will contain a link to the image and the extracted text.
-
-If you search for text that is part of the image, it will yield the annotation document.
+This plugin extracts text from images with flexible configuration options and templates.
 
 ## Demo
-![Demo](https://raw.githubusercontent.com/schlundd/obsidian-ocr-plugin/master/demo.gif)
 
-## Remarks
+### Create an annotation file
+![Demo](https://raw.githubusercontent.com/schlundd/obsidian-ocr-plugin/master/create_annotation.gif)
 
-**Note**: The process of extracting the text from the image is not done locally, but via an online API. The service stores the image on its servers only as long as necessary for the text extraction. However, if this is a dealbreaker for you, see [Alternatives](#Alternatives).
+### Insert image content at cursor position
 
-## Alternatives
-### Local Tesseract installation
-See https://forum.obsidian.md/t/basic-ocr-in-obsidian/18087
+![Demo](https://raw.githubusercontent.com/schlundd/obsidian-ocr-plugin/master/insert_at_postion.gif)
 
-Advantages:
-* runs locally on your machine
 
-Disadvantages:
-* runs locally on your machine
-* probably slower
-* probably worse results
+## Further remarks
+
+The process of extracting texts from images does not happen locally, but uses an online service. This makes the extraction high-quality and available on all devices.
+
+A usage limit may be enforced on free accounts. If you are unsure about whether you may hit these limits, you probably won't, but there is also a paid plan available, if you do.
+
+For further enquiries, get in touch [support@taskbone.com](mailto:support@taskbone.com)
