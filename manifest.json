@@ -1,9 +1,9 @@
 {
 	"id": "taskbone-ocr-plugin",
-	"name": "Taskbone OCR",
-	"version": "2.0.0",
+	"name": "Taskbone",
+	"version": "2.0.1",
 	"minAppVersion": "1.0.0",
-	"description": "Extract text from images and make it available for search.",
+	"description": "Sync Obsidian with Todoist, extract text from images (OCR).",
 	"author": "Dominik Schlund",
 	"isDesktopOnly": false
 }

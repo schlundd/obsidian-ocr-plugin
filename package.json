@@ -1,6 +1,6 @@
 {
   "name": "taskbone-plugin",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Extract text from images and make it available for search.",
   "main": "main.js",
   "scripts": {
