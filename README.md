@@ -15,7 +15,7 @@ Growing set of flexible tools for your productivity.
 
 ### Example: Sync a document with a project
 
-![Todoist Sync](https://raw.githubusercontent.com/schlundd/obsidian-ocr-plugin/master/sync_todoist.gif
+![Todoist Sync](https://raw.githubusercontent.com/schlundd/obsidian-ocr-plugin/master/sync_todoist.gif)
 
 Check out the [documentation](https://app.taskbone.com/documentation) for more.
 ## OCR for Obsidian
