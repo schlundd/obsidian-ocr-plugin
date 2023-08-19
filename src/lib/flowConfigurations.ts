@@ -2,7 +2,7 @@ import { App, arrayBufferToBase64, MarkdownView, Plugin, requestUrl, Setting, TF
 import { createRandomId, stringFromTemplateString } from "./tools";
 import { FlowConfiguration, InputConfiguration, validateApiResponse, APIResponse, Settings, validateFlowConfiguration } from "./validation";
 import { getCachedFlowDefinitionByURL, getFlowDefinitionByURL } from "./flowDefinitions";
-import { promtForFileSelection, promtForMultipleTextInputs, showText } from "src/ui/tools";
+import { promptForFileSelection, promptForMultipleTextInputs, showText } from "src/ui/tools";
 import { getApiKey, getSettings } from "./settings";
 
 interface FlowInput {
@@ -131,7 +131,7 @@ export const executeFlowConfiguration = async (plugin: Plugin, configuration: Fl
         return (definition.name === inputConfig.name)
       })
       if (definition) {
-        const file = await promtForFileSelection(app, inputConfig, definition)
+        const file = await promptForFileSelection(app, inputConfig, definition)
         console.log("chose file: ")
         console.log(file)
         if (file) {
@@ -167,7 +167,7 @@ export const executeFlowConfiguration = async (plugin: Plugin, configuration: Fl
       }
     })
 
-    const proptResults = await promtForMultipleTextInputs(app, promptTexts)
+    const proptResults = await promptForMultipleTextInputs(app, promptTexts)
     if (proptResults) {
       for (const result of proptResults) {
         input.constants[result.name] = result.value

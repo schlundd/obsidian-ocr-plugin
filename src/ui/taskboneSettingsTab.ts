@@ -1,10 +1,11 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import { register, unregister } from "src/lib/commands";
 import { addConfigurationFromURL, duplicateWithNewCommand } from "src/lib/flowConfigurations";
-import { applySettings, connectToAccount, getApiKey, getSettings, saveSettings } from "src/lib/settings";
+import { applySettings, connectToAccount, getApiKey, getSettings, saveSettings, updateApiKey } from "src/lib/settings";
 import { FlowConfiguration, Settings } from "src/lib/validation";
 import { TaskbonePlugin } from "src/taskbonePlugin";
 import { FlowConfigurationModal } from "./flowConfigurationModal";
+import { promptForMultipleTextInputs } from "./tools";
 
 export class TaskboneSettingsTab extends PluginSettingTab {
 
@@ -75,7 +76,22 @@ export class TaskboneSettingsTab extends PluginSettingTab {
         button.setButtonText('Connect')
         button.onClick(async () => {
           await connectToAccount(plugin)
+          const settings = await getSettings(plugin)
           TaskboneSettingsTab.displaySettings(container, settings, plugin)
+        })
+      })
+      setting.addButton((button) => {
+        button.setButtonText('Add Secret key manually')
+        button.onClick(async () => {
+          const inputs = await promptForMultipleTextInputs(app, [{
+            description: "The secret key you received from Taskbone. Use only if automatic connection does not work.",
+            name: "Secret Key"
+          }])
+          if (inputs && inputs.length === 1) {
+            await connectToAccount(plugin, inputs[0].value)
+            const settings = await getSettings(plugin)
+            TaskboneSettingsTab.displaySettings(container, settings, plugin)
+          }
         })
       })
     } else {

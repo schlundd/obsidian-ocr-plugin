@@ -74,7 +74,7 @@ export const getDefaultSettings = (plugin: Plugin): Settings => {
   }
 }
 
-export const connectToAccount = async (plugin: Plugin) => {
+export const connectToAccount = async (plugin: Plugin, key?: string) => {
   const app = plugin.app
 
   const baseUrl = (await getSettings(plugin)).baseUrl
@@ -84,15 +84,14 @@ export const connectToAccount = async (plugin: Plugin) => {
   const apiUrl = new URL(`/integrations/obsidian/connect/${code}`, baseUrl).toString()
   const pageUrl = new URL(`/integrations/obsidian/welcome/${code}`, baseUrl).toString()
 
-  const key = await new Promise<string>((resolve) => {
+  key = key ?? await new Promise<string>((resolve) => {
     new WelcomeModal(app, apiUrl, pageUrl, (key: string) => {
       resolve(key)
     }).open()
   })
+
   if (key) {
     await updateApiKey(plugin, key)
-
-    showText(app, "Your Taskbone account is now connected.", "Success")
 
     const configs = await getMyConfigurationsFromServer(plugin, key)
 
@@ -104,6 +103,8 @@ export const connectToAccount = async (plugin: Plugin) => {
 
     await saveSettings(settings, plugin)
     await applySettings(settings, plugin)
+
+    showText(app, "Your Taskbone account is now connected.", "Success")
 
     return (key)
   } else {

@@ -5,7 +5,7 @@ import { getCachedFlowDefinitionByURL, getFlowDefinitionByURL } from "src/lib/fl
 import { getDefaultInputConfigurationForTypes } from "src/lib/flowConfigurations";
 import { getDefaultForAction } from "src/lib/actions";
 import { updateAndSaveConfiguration } from "src/lib/settings";
-import { promtForFileSelection } from "./tools";
+import { promptForFileSelection } from "./tools";
 
 export class FlowConfigurationModal extends Modal {
 
@@ -155,7 +155,7 @@ export class FlowConfigurationModal extends Modal {
         pathSetting.addExtraButton(button => {
           button.setIcon("search")
           button.onClick(async () => {
-            const file = await promtForFileSelection(app, config, definition)
+            const file = await promptForFileSelection(app, config, definition)
             if (file) {
               text.setValue(file.path)
               config.path = file.path

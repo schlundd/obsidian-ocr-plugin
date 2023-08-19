@@ -3,10 +3,6 @@ import { FileConfiguration, InputDefinition } from "src/lib/validation"
 import { SelectFileModal } from "./selectFileModal"
 import { EnterTextModal } from "./enterTextModal"
 import { ShowTextModal } from "./showTextModal"
-import { WelcomeModal } from "./welcomeModal"
-import { applySettings, getSettings, saveSettings, updateApiKey } from "src/lib/settings"
-import { createRandomId } from "src/lib/tools"
-import { addConfigurationFromURL, getMyConfigurationsFromServer } from "src/lib/flowConfigurations"
 
 export const createStringEditInput = (container: HTMLElement, text: string, props: { name?: string, description?: string, onChange?: (value: string) => any }) => {
   const setting = new Setting(container)
@@ -25,7 +21,7 @@ export const createStringEditInput = (container: HTMLElement, text: string, prop
   return setting
 }
 
-export const promtForFileSelection = async (app: App, config: FileConfiguration, definition: InputDefinition) => {
+export const promptForFileSelection = async (app: App, config: FileConfiguration, definition: InputDefinition) => {
   return new Promise<TFile | void>((resolve) => {
     new SelectFileModal(app, config, definition, (file) => {
       resolve(file)
@@ -33,7 +29,7 @@ export const promtForFileSelection = async (app: App, config: FileConfiguration,
   })
 }
 
-export const promtForMultipleTextInputs = async (app: App, inputDescriptions: Array<{ name: string, description: string }>) => {
+export const promptForMultipleTextInputs = async (app: App, inputDescriptions: Array<{ name: string, description: string }>) => {
   return new Promise<Array<{ name: string, value: string }> | void>((resolve) => {
     new EnterTextModal(app, inputDescriptions, (result) => {
       resolve(result)
