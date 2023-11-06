@@ -453,11 +453,35 @@ const actionSchema: JSONSchemaType<Action> = {
   required: []
 }
 
+export interface Trigger {
+  event: "fileOpen",
+  condition: string,
+  frequency: "oncePerFileAndSession"
+}
+
+const triggerSchema: JSONSchemaType<Trigger> = {
+  type: "object",
+  properties: {
+    condition: {
+      type: "string"
+    },
+    event: {
+      type: "string",
+      enum: ["fileOpen"]
+    },
+    frequency: {
+      type: "string",
+      enum: ["oncePerFileAndSession"]
+    }
+  },
+  required: ["condition", "frequency", "event"]
+}
 export interface FlowConfiguration {
   flow: string,
   command: Command,
   inputConfigurations: Array<InputConfiguration>,
-  resultActions: Array<Action>
+  resultActions: Array<Action>,
+  triggers?: Array<Trigger>
 }
 
 const flowConfigurationSchema: JSONSchemaType<FlowConfiguration> = {
@@ -474,6 +498,11 @@ const flowConfigurationSchema: JSONSchemaType<FlowConfiguration> = {
     resultActions: {
       type: "array",
       items: actionSchema
+    },
+    triggers: {
+      type: "array",
+      items: triggerSchema,
+      nullable: true
     }
   },
   required: ["inputConfigurations", "command", "flow", "resultActions"]

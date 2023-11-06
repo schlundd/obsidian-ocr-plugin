@@ -5,6 +5,7 @@ import { createRandomId } from "./tools";
 import { WelcomeModal } from "src/ui/welcomeModal";
 import { showText } from "src/ui/tools";
 import { addConfigurationFromURL, getMyConfigurationsFromServer } from "./flowConfigurations";
+import { registerTriggers, removeTriggers } from "./trigger/onChange/triggers";
 
 
 let settings: Settings
@@ -18,7 +19,9 @@ export const getSettings = async (plugin: Plugin) => {
     if (validateSettings(data)) {
       settings = data
     } else {
-      return getDefaultSettings(plugin)
+      console.log("Error reading settings")
+      console.log(validateSettings.errors)
+      // return getDefaultSettings(plugin)
     }
   }
   return JSON.parse(JSON.stringify(settings)) as Settings
@@ -30,8 +33,12 @@ export const saveSettings = async (newSettings: Settings, plugin: Plugin) => {
 }
 
 export const applySettings = async (settings: Settings, plugin: Plugin) => {
-  unregisterAll(plugin.manifest.id, app)
+  unregisterAll(plugin.manifest.id, plugin.app)
   registerAll(settings.flowConfigurations.map((flowConfiguration) => { return flowConfiguration.command }), plugin)
+  registerTriggers(settings, plugin)
+  removeTriggers(plugin.app)
+  
+
 }
 
 export const updateApiKey = async (plugin: Plugin, newKey: string) => {

@@ -1,6 +1,6 @@
-import { App, Plugin, requestUrl } from "obsidian"
+import { App, Plugin } from "obsidian"
 import { executeFlowConfiguration } from "./flowConfigurations"
-import { getApiKey, getSettings } from "./settings"
+import { getSettings } from "./settings"
 
 export const unregister = (command: { id: string }, pluginId: string, app: App) => {
   try {

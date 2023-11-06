@@ -1,0 +1,1 @@
+const fileOpenTriggerList: Array<string> = []

@@ -9,6 +9,11 @@ export const stringFromTemplateString = (template: string, context: any): string
   return (new Function(...Object.keys(context), functionCode))(...Object.values(context));
 }
 
+export const booleanFromConditionString = (code: string, context: any): boolean => {
+  const functionCode = "return (" + code + ")";
+  return (new Function(...Object.keys(context), functionCode))(...Object.values(context));
+}
+
 export const groupBy = <T>(array: T[], predicate: (value: T, index: number, array: T[]) => string) =>
   array.reduce((acc, value, index, array) => {
     (acc[predicate(value, index, array)] ||= []).push(value);
