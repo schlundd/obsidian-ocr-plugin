@@ -1,1 +1,1 @@
-const fileOpenTriggerList: Array<string> = []
+export const fileOpenTriggerList: Array<string> = []

@@ -35,10 +35,9 @@ export const saveSettings = async (newSettings: Settings, plugin: Plugin) => {
 export const applySettings = async (settings: Settings, plugin: Plugin) => {
   unregisterAll(plugin.manifest.id, plugin.app)
   registerAll(settings.flowConfigurations.map((flowConfiguration) => { return flowConfiguration.command }), plugin)
-  registerTriggers(settings, plugin)
-  removeTriggers(plugin.app)
-  
 
+  removeTriggers(plugin.app)
+  registerTriggers(settings, plugin)
 }
 
 export const updateApiKey = async (plugin: Plugin, newKey: string) => {

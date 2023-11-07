@@ -1,9 +1,9 @@
 import { App, Plugin, TFile } from "obsidian"
 import { listeners } from "src/lib/data/listeners";
 import { executeFlowConfiguration } from "src/lib/flowConfigurations";
-import { getSettings } from "src/lib/settings";
 import { booleanFromConditionString } from "src/lib/tools";
-import { Settings } from "src/lib/validation";
+import { Settings, Trigger } from "src/lib/validation";
+import {fileOpenTriggerList} from "src/lib/data/triggers"
 
 
 export const getListOfTriggerEvents = (settings: Settings) => {
@@ -21,8 +21,11 @@ export const getListOfTriggerEvents = (settings: Settings) => {
 
 export const registerTriggers = (settings: Settings, plugin: Plugin) => {
   const events = getListOfTriggerEvents(settings)
+  console.log(events)
   if (events.fileOpen) {
+    console.log("registering")
     listeners.push(plugin.app.workspace.on("file-open", async (file) => {
+      console.log("open")
       if (file) {
         await checkAndExecuteFileOpenTriggers(file, plugin, settings)
       }
@@ -65,4 +68,12 @@ export const checkAndExecuteFileOpenTriggers = async (file: TFile, plugin: Plugi
       }
     }
   }
+}
+
+export const getDefaultTriggerForEvent = (event: "fileOpen") => {
+  return {
+    condition: "",
+    event,
+    frequency: "oncePerFileAndSession"
+  } satisfies Trigger
 }

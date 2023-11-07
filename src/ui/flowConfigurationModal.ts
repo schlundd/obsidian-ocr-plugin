@@ -1,11 +1,12 @@
 import { Modal, Setting } from "obsidian";
-import { Action, FlowConfiguration, FlowDefinition, InputConfiguration, InputDefinition, OutputDefinition } from "src/lib/validation";
+import { Action, FlowConfiguration, FlowDefinition, InputConfiguration, InputDefinition, OutputDefinition, Trigger } from "src/lib/validation";
 import { TaskbonePlugin } from "src/taskbonePlugin";
 import { getCachedFlowDefinitionByURL, getFlowDefinitionByURL } from "src/lib/flowDefinitions";
 import { getDefaultInputConfigurationForTypes } from "src/lib/flowConfigurations";
 import { getDefaultForAction } from "src/lib/actions";
 import { updateAndSaveConfiguration } from "src/lib/settings";
 import { promptForFileSelection } from "./tools";
+import { getDefaultTriggerForEvent } from "src/lib/trigger/onChange/triggers";
 
 export class FlowConfigurationModal extends Modal {
 
@@ -16,6 +17,8 @@ export class FlowConfigurationModal extends Modal {
     super(plugin.app)
     this.plugin = plugin
     this.configuration = configuration
+
+    this.configuration.triggers = this.configuration.triggers ?? []
   }
 
   async onOpen(): Promise<void> {
@@ -27,12 +30,16 @@ export class FlowConfigurationModal extends Modal {
 
     const actionsElement = document.createElement("div")
     this.contentEl.insertAdjacentElement("beforeend", actionsElement)
+    
+    const triggersElement = document.createElement("div")
+    this.contentEl.insertAdjacentElement("beforeend", triggersElement)
 
     // paint with flow from cache
     getCachedFlowDefinitionByURL(this.plugin, this.configuration.flow).then((flow) => {
       if (flow) {
         FlowConfigurationModal.displayInputConfigurations(detailElement, flow, this.configuration, this.plugin)
         FlowConfigurationModal.displayActionSettings(actionsElement, this.configuration.resultActions, flow.outputDefinitions)
+        FlowConfigurationModal.displayTriggerSettings(triggersElement, this.configuration.triggers!)
       }
     })
 
@@ -41,6 +48,7 @@ export class FlowConfigurationModal extends Modal {
       if (flow) {
         FlowConfigurationModal.displayInputConfigurations(detailElement, flow, this.configuration, this.plugin)
         FlowConfigurationModal.displayActionSettings(actionsElement, this.configuration.resultActions, flow.outputDefinitions)
+        FlowConfigurationModal.displayTriggerSettings(triggersElement, this.configuration.triggers!)
       }
     })
 
@@ -322,5 +330,90 @@ export class FlowConfigurationModal extends Modal {
     }
   }
 
+  public static displayTriggerSettings(el: HTMLElement, triggers: Trigger[]) {
+    el.empty()
 
+    new Setting(el).setName("Run command automatically").setHeading()
+
+    // actions
+
+    const addTriggerButtonSetting = new Setting(el)
+    addTriggerButtonSetting.addButton(button => {
+      button.setButtonText("Add Trigger")
+      button.setCta()
+      button.onClick(click => {
+        triggers.push(getDefaultTriggerForEvent("fileOpen"))
+        FlowConfigurationModal.displayTriggerSettings(el, triggers)
+      })
+    })
+
+    for (let index = 0; index < triggers.length; index++) {
+      const trigger = triggers[index]
+
+      const triggerSetting = new Setting(el)
+      triggerSetting.setName("Event")
+      triggerSetting.setDesc("What type of event should trigger the command")
+      triggerSetting.addDropdown(dropdown => {
+        dropdown.addOptions({
+          "fileOpen": "Open a file"
+        })
+        dropdown.onChange(value => {
+          if(value === "fileOpen") {
+            Object.assign(trigger, getDefaultTriggerForEvent(value))
+          }
+          FlowConfigurationModal.displayTriggerSettings(el, triggers)
+
+        })
+        dropdown.setValue(trigger.event)
+      })
+
+      if (trigger.event === "fileOpen") {
+        const conditionInputEl = document.createElement("div")
+        triggerSetting.settingEl.insertAdjacentElement("afterend", conditionInputEl)
+        const conditionInput = new Setting(conditionInputEl)
+        conditionInput.setName("Condition")
+        conditionInput.setDesc("Optional condition")
+        conditionInput.addTextArea(textInput => {
+          textInput.setValue(trigger.condition)
+          textInput.onChange(value => {
+            trigger.condition = value
+          })
+        })
+      }
+
+      if (trigger.event === "fileOpen") {
+
+        const frequencyInputElement = document.createElement("div")
+        triggerSetting.settingEl.insertAdjacentElement("afterend", frequencyInputElement)
+        const frequencySetting = new Setting(frequencyInputElement)
+        frequencySetting.setName("Frequency")
+        frequencySetting.setDesc("How often should the command run")
+        frequencySetting.addDropdown(dropdown => {
+          dropdown.addOptions({
+            "oncePerFileAndSession": "Once per file and Obsidian session"
+          })
+          dropdown.onChange(value => {
+            if(value === "oncePerFileAndSession") {
+              trigger.frequency = value
+            }
+            FlowConfigurationModal.displayTriggerSettings(el, triggers)
+
+          })
+          dropdown.setValue(trigger.frequency)
+        })
+      }
+
+      const deleteTriggerSettingEl = document.createElement("div")
+      el.insertAdjacentElement("beforeend", deleteTriggerSettingEl)
+      const deleteActionSetting = new Setting(deleteTriggerSettingEl)
+      deleteActionSetting.addButton(button => {
+        button.setButtonText("Remove trigger")
+        button.setWarning()
+        button.onClick(click => {
+          triggers.splice(index, 1)
+          FlowConfigurationModal.displayTriggerSettings(el, triggers)
+        })
+      })
+    }
+  }
 }
