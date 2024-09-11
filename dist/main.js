@@ -8186,7 +8186,7 @@ var execute = async (inputs, flow, plugin) => {
   try {
     const response = await (0, import_obsidian6.requestUrl)({
       url: url.toString(),
-      method: "post",
+      method: "POST",
       contentType: "application/json",
       body: JSON.stringify(inputs),
       headers: {
@@ -8231,7 +8231,7 @@ var getMyConfigurationsFromServer = async (plugin, apiKey) => {
   try {
     const response = await (0, import_obsidian6.requestUrl)({
       url: url.toString(),
-      method: "get",
+      method: "GET",
       contentType: "application/json",
       headers: {
         "authorization": `Bearer ${apiKey}`
@@ -8253,8 +8253,6 @@ var addConfigurationFromURL = async (url, oldSettings) => {
       contentType: "application/json",
       throw: false
     });
-    console.log(response.text);
-    console.log(url.toString());
     const config = response.json;
     if (!validateFlowConfiguration(config)) {
       console.log(validateFlowConfiguration.errors);
@@ -8348,7 +8346,7 @@ var WelcomeModal = class extends import_obsidian7.Modal {
       console.log(`Trying to connect to Taskbone (attempt ${count} of ${limit})`);
       secretKey = await (0, import_obsidian7.request)({
         url: this.apiUrl,
-        method: "post"
+        method: "POST"
       });
       await wait(2e3);
     } while (secretKey === "" && count < limit);
