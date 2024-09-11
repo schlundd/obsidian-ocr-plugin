@@ -1,6 +1,6 @@
 {
   "name": "taskbone-plugin",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Extract text from images and make it available for search.",
   "main": "main.js",
   "scripts": {
@@ -17,7 +17,7 @@
     "@rollup/plugin-json": "^5.0.1",
     "@rollup/plugin-node-resolve": "^11.2.1",
     "@rollup/plugin-typescript": "^8.2.1",
-    "@taskbone/obsidian-plugin-base": "1.1.0",
+    "@taskbone/obsidian-plugin-base": "1.1.1",
     "@types/node": "^14.14.37",
     "ajv": "^8.11.0",
     "esbuild": "^0.23.1",
